@@ -31,17 +31,6 @@
 - **沖煮紀錄（我的配方本）**：記下日期時間、配方、感受、1–5 分評分、磨豆機刻度和筆記。每筆紀錄都可以「照這杯再沖」，一鍵帶回當時的配方。
 - **匯出 CSV**：把全部紀錄複製成 CSV，貼到試算表保存或分析。
 
-## 使用方式
-
-### 直接打開
-下載 `index.html`，用瀏覽器（Chrome、Safari、Edge、Firefox）打開即可。
-
-### 用 GitHub Pages 發布
-1. 把 `index.html` 和 `README.md` 推到 GitHub repository。
-2. 到 repository 的 **Settings → Pages**。
-3. **Source** 選 `Deploy from a branch`，Branch 選 `main`、資料夾選 `/ (root)`，按 Save。
-4. 約一分鐘後，網站會出現在 `https://<你的帳號>.github.io/<repository 名稱>/`。
-
 ## 資料儲存
 
 沖煮紀錄存在瀏覽器的 `localStorage`，不會上傳到任何伺服器。
