@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>手沖日報</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: 12-col broadsheet. Masthead → bean picker (4 collapsed columns) → 7/5 calculator + stats → ticker → inverted brew sheet with timer → 8/4 editor's note */
+:root {
+  --paper: #F9F9F7;
+  --ink: #111111;
+  --rule: #E5E5E0;
+  --red: #CC0000;
+  --n100: #F5F5F5;
+  --n400: #A3A3A3;
+  --n500: #737373;
+  --n600: #525252;
+  --n700: #404040;
+  --focus-bg: #F0F0F0;
+  --display: 'Playfair Display', 'Noto Serif TC', 'Times New Roman', serif;
+  --body: 'Lora', 'Noto Serif TC', Georgia, serif;
+  --ui: 'Inter', 'Noto Sans TC', 'Helvetica Neue', sans-serif;
+  --mono: 'JetBrains Mono', 'Noto Sans TC', 'Courier New', monospace;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; border-radius: 0 !important; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.inverted button:focus-visible { outline-color: var(--paper); }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+
+.label {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--n500);
+}
+.newsprint-texture { position: relative; }
+.newsprint-texture::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image:
+    linear-gradient(0deg, transparent 98%, rgba(0,0,0,.02) 100%),
+    linear-gradient(90deg, transparent 98%, rgba(0,0,0,.02) 100%);
+  background-size: 3px 3px;
+}
+
+/* ---------- Masthead ---------- */
+.meta-top {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px;
+  padding-block: 12px; border-bottom: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+}
+.mast-title {
+  font-family: var(--display); font-weight: 900; text-align: center;
+  font-size: clamp(4.25rem, 15vw, 9rem); line-height: .9; letter-spacing: -.02em;
+  margin: 0; padding-block: 24px 16px;
+}
+.mast-sub {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+  border-top: 1px solid var(--ink); border-bottom: 4px solid var(--ink);
+  padding-block: 8px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+}
+.mast-sub .en { font-family: var(--display); font-style: italic; font-size: 20px; letter-spacing: 0; text-transform: none; }
+.mast-sub span:last-child { text-align: right; }
+
+/* ---------- Section heads ---------- */
+.sec { padding-block: 40px 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+.sec-head h2 {
+  font-family: var(--display); font-weight: 900; margin: 4px 0 0;
+  font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.05; text-wrap: balance;
+}
+.sec-head p { margin: 0; font-size: 15px; color: var(--n600); max-width: 40ch; }
+
+/* ---------- Bean grid (collapsed borders via 1px gap on ink) ---------- */
+.bean-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--ink); border: 1px solid var(--ink);
+}
+.bean {
+  text-align: left; border: 0; background: var(--paper); padding: 20px;
+  display: flex; flex-direction: column; gap: 10px; min-height: 230px;
+  transition: background-color .2s ease-out, color .2s ease-out;
+}
+.bean:hover { background: var(--n100); }
+.bean[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.bean[aria-pressed="true"] .label, .bean[aria-pressed="true"] .bean-ex { color: var(--n400); }
+.bean h3 { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 0; }
+.bean-ex { font-size: 14px; color: var(--n600); margin: 0; }
+.bean-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; border-top: 1px solid currentColor; padding-top: 10px; }
+.bean-temp { font-family: var(--mono); font-weight: 500; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.bean-temp small { display: block; font-size: 11px; letter-spacing: .12em; margin-top: 4px; opacity: .7; }
+.badge {
+  display: inline-block; background: var(--red); color: #fff;
+  font-family: var(--ui); font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  padding: 3px 7px; text-transform: uppercase; white-space: nowrap;
+}
+
+/* ---------- Calculator split ---------- */
+.split { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); border: 1px solid var(--ink); background: var(--paper); }
+.calc { grid-column: span 7; padding: 28px; border-right: 1px solid var(--ink); display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.stats { grid-column: span 5; display: flex; flex-direction: column; min-width: 0; }
+
+.ctl { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center; gap: 12px; }
+.seg { display: flex; border: 1px solid var(--ink); }
+.seg button {
+  flex: 1; min-height: 44px; border: 0; background: transparent; padding: 8px 10px;
+  font-family: var(--ui); font-size: 15px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background-color .2s ease-out, color .2s ease-out;
+}
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button:hover:not(:disabled) { background: var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button:disabled { color: var(--n400); cursor: not-allowed; }
+.seg .badge { font-size: 10px; padding: 2px 5px; }
+.hint { font-size: 14px; color: var(--n600); margin: 0; }
+
+.fields { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; }
+.swap { font-family: var(--display); font-size: 32px; line-height: 1; padding-bottom: 18px; color: var(--n500); }
+.field { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.field-row { display: flex; align-items: stretch; border-bottom: 2px solid var(--ink); }
+.field input {
+  flex: 1; min-width: 0; width: 100%; border: 0; background: transparent;
+  font-family: var(--mono); font-weight: 500; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1;
+  padding: 6px 4px; font-variant-numeric: tabular-nums; color: var(--ink);
+  -moz-appearance: textfield;
+}
+.field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.field input:focus-visible { outline: none; background: var(--focus-bg); }
+.field .unit { align-self: flex-end; font-family: var(--mono); font-size: 16px; padding: 0 6px 10px 0; }
+.step-btn {
+  min-width: 44px; min-height: 44px; border: 0; background: transparent;
+  font-family: var(--mono); font-size: 22px; align-self: center;
+  transition: background-color .2s, color .2s;
+}
+.step-btn:hover { background: var(--ink); color: var(--paper); }
+.field.is-source .label::after { content: ' · 基準'; color: var(--red); }
+
+.ratios { display: flex; flex-wrap: wrap; border: 1px solid var(--ink); }
+.ratios button {
+  flex: 1 1 0; min-width: 56px; min-height: 44px; border: 0; background: transparent;
+  font-family: var(--mono); font-size: 15px; position: relative; font-variant-numeric: tabular-nums;
+  transition: background-color .2s, color .2s;
+}
+.ratios button + button { border-left: 1px solid var(--ink); }
+.ratios button:hover { background: var(--rule); }
+.ratios button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.ratios button.rec::after { content: ''; position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; background: var(--red); }
+
+.warn {
+  margin: 0; border-left: 4px solid var(--red); padding: 8px 12px; background: var(--n100);
+  font-family: var(--ui); font-size: 14px;
+}
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ink); border-bottom: 1px solid var(--ink); }
+.stat { background: var(--paper); padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stat.wide { grid-column: span 2; }
+.stat .v { font-family: var(--mono); font-weight: 500; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 14px; color: var(--n500); margin-left: 6px; }
+.stat .t { font-family: var(--ui); font-size: 16px; font-weight: 500; }
+.stat-hero { padding: 24px 20px; border-bottom: 1px solid var(--ink); }
+.stat-hero .big {
+  font-family: var(--display); font-weight: 900; line-height: .95; letter-spacing: -.02em;
+  font-size: clamp(3rem, 7vw, 5.25rem); font-variant-numeric: lining-nums tabular-nums;
+}
+.stat-hero .big span { font-family: var(--mono); font-weight: 400; font-size: .32em; letter-spacing: 0; margin-left: 4px; }
+.fig { margin-top: auto; padding: 10px 20px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--n500); text-transform: uppercase; }
+
+/* ---------- Ticker ---------- */
+.ticker { margin-top: 40px; background: var(--ink); color: var(--paper); overflow: hidden; border-block: 1px solid var(--ink); }
+.ticker-track { display: flex; width: max-content; animation: crawl 38s linear infinite; }
+.ticker-group { display: flex; align-items: center; gap: 28px; padding: 10px 14px; white-space: nowrap; font-family: var(--mono); font-size: 13px; letter-spacing: .1em; }
+.ticker-group .dot { color: var(--n400); }
+@keyframes crawl { to { transform: translateX(-50%); } }
+
+/* ---------- Brew sheet (inverted) ---------- */
+.inverted { background: var(--ink); color: var(--paper); }
+.brew { padding: 32px 28px 36px; }
+.brew .label { color: var(--n400); }
+.brew-head { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 24px; align-items: stretch; }
+.brew-title { grid-column: span 7; display: flex; flex-direction: column; gap: 10px; }
+.brew-title h2 { font-family: var(--display); font-weight: 900; font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: .95; margin: 0; letter-spacing: -.01em; }
+.brew-title .sub { font-family: var(--ui); font-size: 15px; color: var(--n400); margin: 0; }
+
+.timer { grid-column: span 5; border: 1px solid var(--paper); display: flex; flex-direction: column; }
+.clock-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--n600); }
+.clock { font-family: var(--mono); font-weight: 500; font-size: clamp(3rem, 8vw, 4.5rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.clock-of { font-family: var(--mono); font-size: 13px; color: var(--n400); text-align: right; }
+.timer-btns { display: flex; }
+.btn {
+  flex: 1; min-height: 52px; border: 1px solid transparent; padding: 10px 16px;
+  font-family: var(--ui); font-weight: 600; font-size: 14px; letter-spacing: .16em; text-transform: uppercase;
+  transition: background-color .2s ease-out, color .2s ease-out, border-color .2s ease-out;
+}
+.btn-go { background: var(--red); color: #fff; }
+.btn-go:hover { background: var(--paper); color: var(--ink); }
+.btn-ghost { background: transparent; color: var(--paper); border-left: 1px solid var(--n600); }
+.btn-ghost:hover { background: var(--paper); color: var(--ink); }
+
+.now { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); border-top: 1px solid var(--n600); border-bottom: 1px solid var(--n600); margin-top: 28px; }
+.now > div { padding: 14px 16px; min-width: 0; }
+.now-cur { grid-column: span 7; border-right: 1px solid var(--n600); }
+.now-next { grid-column: span 5; }
+.now strong { display: block; font-family: var(--display); font-size: 26px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.now p { margin: 4px 0 0; color: var(--n400); font-size: 15px; }
+
+.timeline { position: relative; height: 72px; margin-top: 28px; border-bottom: 1px solid var(--paper); }
+.tl-pour { position: absolute; bottom: 0; background: var(--paper); opacity: .9; }
+.tl-pour.done { opacity: .35; }
+.tl-end { position: absolute; bottom: 0; top: 0; width: 0; border-left: 1px dashed var(--n400); }
+.tl-head { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--red); left: 0; }
+.tl-ticks { position: relative; height: 22px; font-family: var(--mono); font-size: 11px; color: var(--n400); }
+.tl-ticks span { position: absolute; top: 4px; transform: translateX(-50%); }
+.tl-ticks span:first-child { transform: none; }
+
+.steps { list-style: none; margin: 20px 0 0; padding: 0; }
+.steps-head, .step {
+  display: grid; grid-template-columns: 3rem 5rem minmax(0,1fr) 6rem 6rem; gap: 16px; align-items: center;
+}
+.steps-head { padding: 0 12px 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; color: var(--n400); text-transform: uppercase; border-bottom: 1px solid var(--n600); }
+.steps-head span:nth-last-child(-n+2) { text-align: right; }
+.step { padding: 14px 12px; border-bottom: 1px solid var(--n700); transition: background-color .2s ease-out, color .2s ease-out; }
+.step-num {
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  background: var(--red); color: #fff; font-family: var(--display); font-weight: 900; font-size: 22px;
+}
+.step-num.end { background: transparent; border: 1px solid currentColor; color: inherit; font-size: 18px; }
+.step-time { font-family: var(--mono); font-size: 17px; font-variant-numeric: tabular-nums; }
+.step-body h3 { font-family: var(--display); font-size: 21px; font-weight: 700; margin: 0; line-height: 1.25; }
+.step-body p { margin: 2px 0 0; font-size: 15px; color: var(--n400); }
+.step-ml { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.step-ml b { font-size: 22px; font-weight: 500; }
+.step-ml small { display: block; font-size: 10px; letter-spacing: .14em; color: var(--n400); text-transform: uppercase; }
+.step.active { background: var(--paper); color: var(--ink); }
+.step.active p, .step.active small { color: var(--n600); }
+.step.done { color: var(--n500); }
+.step .step-body p.look { margin-top: 6px; font-family: var(--ui); font-size: 13px; letter-spacing: .04em; color: var(--paper); }
+.step .step-body p.look::before { content: '◎ '; color: var(--n400); }
+.step.active .step-body p.look { color: var(--ink); }
+.step.done .step-body p.look { color: var(--n500); }
+.hero-sub { margin-top: 10px; font-family: var(--ui); font-size: 14px; color: var(--n600); }
+.tl-pour.phase { opacity: .55; }
+.tl-pour.phase.flow { opacity: .95; }
+.step.done .step-num { background: var(--n700); }
+
+/* ---------- Notes ---------- */
+.notes { margin-top: 40px; }
+.note-main { grid-column: span 8; padding: 28px; border-right: 1px solid var(--ink); min-width: 0; }
+.note-side { grid-column: span 4; padding: 28px; min-width: 0; }
+.note-main h3, .note-side h3 { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1.15; margin: 6px 0 16px; text-wrap: balance; }
+.cols { columns: 2; column-gap: 32px; column-rule: 1px solid var(--rule); text-align: justify; font-size: 16px; line-height: 1.75; }
+.cols p { margin: 0 0 1em; }
+.dropcap::first-letter {
+  float: left; font-family: var(--display); font-weight: 900; font-size: 4.6em; line-height: .82;
+  margin: .06em .12em 0 0; color: var(--red);
+}
+.tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tips li { display: grid; grid-template-columns: 14px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--ink); font-size: 15px; }
+.tips li::before { content: ''; width: 10px; height: 10px; background: var(--ink); margin-top: 8px; }
+
+.orn { padding-block: 32px; text-align: center; font-family: var(--display); font-size: 24px; color: var(--n400); letter-spacing: 1em; }
+footer { border-top: 4px solid var(--ink); padding-top: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--n600); }
+
+/* ---------- Scale emphasis & countdown ---------- */
+.scale-note { margin: 20px 0 0; font-family: var(--ui); font-size: 13px; color: var(--n400); }
+.step-ml.amt b { font-size: 16px; font-weight: 400; color: var(--n400); }
+.step.active .step-ml.amt b { color: var(--n600); }
+.step-ml.cum b { font-size: 30px; font-weight: 700; }
+.cd { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; padding: 0 .2em; background: var(--red); color: #fff; font-family: var(--mono); font-weight: 700; margin-right: 8px; vertical-align: middle; }
+
+/* ---------- Tasting & log ---------- */
+.taste { margin-top: 40px; }
+.taste-main { grid-column: span 7; padding: 28px; border-right: 1px solid var(--ink); display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.taste-log { grid-column: span 5; padding: 28px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.h3 { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1.15; margin: 6px 0 0; text-wrap: balance; }
+.recipe-line { font-family: var(--mono); font-size: 13px; color: var(--n600); border-block: 1px solid var(--ink); padding-block: 8px; }
+.taste-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--ink); border: 1px solid var(--ink); }
+.taste-grid button { border: 0; background: var(--paper); min-height: 76px; padding: 12px; text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 4px; font-family: var(--ui); font-weight: 600; font-size: 15px; transition: background-color .2s ease-out, color .2s ease-out; }
+.taste-grid button small { font-weight: 400; font-size: 12px; color: var(--n500); }
+.taste-grid button:hover { background: var(--n100); }
+.taste-grid button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.taste-grid button[aria-pressed="true"] small { color: var(--n400); }
+.advice { border: 1px solid var(--ink); }
+.advice-head { background: var(--ink); color: var(--paper); padding: 10px 16px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-family: var(--ui); font-weight: 600; }
+.advice-head span:last-child { font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: .14em; color: var(--n400); align-self: center; }
+.advice ol { margin: 0; padding: 14px 16px 14px 36px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.advice-foot { border-top: 1px solid var(--rule); padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-family: var(--ui); font-size: 13px; color: var(--n600); }
+.btn-line, .btn-solid { min-height: 44px; padding: 8px 16px; font-family: var(--ui); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: background-color .2s ease-out, color .2s ease-out; }
+.btn-line { border: 1px solid var(--ink); background: transparent; }
+.btn-line:hover { background: var(--ink); color: var(--paper); }
+.btn-solid { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); }
+.btn-solid:hover { background: var(--paper); color: var(--ink); }
+.form-row { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: end; }
+.field-sm { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rating { display: flex; border: 1px solid var(--ink); width: max-content; }
+.rating button { width: 44px; height: 44px; border: 0; background: transparent; font-family: var(--mono); font-size: 15px; transition: background-color .15s, color .15s; }
+.rating button + button { border-left: 1px solid var(--ink); }
+.rating button.on { background: var(--ink); color: var(--paper); }
+.text-in { width: 100%; border: 0; border-bottom: 2px solid var(--ink); background: transparent; padding: 8px 4px; font-family: var(--mono); font-size: 14px; color: var(--ink); resize: vertical; }
+.text-in:focus-visible { outline: none; background: var(--focus-bg); }
+.save-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.saved-msg { font-family: var(--ui); font-size: 14px; color: var(--n600); }
+
+.log-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); max-height: 680px; overflow-y: auto; }
+.log-item { padding-block: 14px; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 4px; }
+.log-top { display: flex; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--n500); letter-spacing: .06em; }
+.log-item h4 { margin: 0; font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.3; }
+.log-recipe { font-family: var(--mono); font-size: 13px; }
+.log-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.chip { font-family: var(--ui); font-size: 12px; border: 1px solid var(--ink); padding: 1px 6px; }
+.chip.good { background: var(--ink); color: var(--paper); }
+.stars { font-family: var(--mono); letter-spacing: 1px; font-size: 13px; }
+.log-note { font-size: 14px; color: var(--n600); margin: 0; }
+.log-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.log-actions .btn-line { min-height: 36px; padding: 4px 12px; font-size: 12px; }
+.log-actions .armed { background: var(--red); border-color: var(--red); color: #fff; }
+.log-empty { font-size: 15px; color: var(--n600); padding-block: 16px; border-top: 1px solid var(--ink); margin: 0; }
+.log-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--n500); }
+
+/* ---------- Focus (brew) mode ---------- */
+.focus { position: fixed; inset: 0; z-index: 50; background: var(--ink); color: var(--paper); display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px); overflow-y: auto; }
+.focus-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 10px; }
+.focus-bar .label { color: var(--n400); }
+.focus-close { min-height: 44px; padding: 0 18px; border: 1px solid var(--paper); background: transparent; color: var(--paper); font-family: var(--ui); font-weight: 600; letter-spacing: .14em; }
+.focus-close:hover { background: var(--paper); color: var(--ink); }
+.focus-prog { height: 4px; background: var(--n700); }
+.focus-prog div { height: 100%; width: 0; background: var(--paper); }
+.focus-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding-block: 16px; }
+.f-step { font-family: var(--display); font-weight: 700; font-size: clamp(1.75rem, 5vw, 3rem); line-height: 1.1; }
+.f-big { font-family: var(--display); font-weight: 900; font-size: clamp(5.5rem, 24vw, 15rem); line-height: .9; font-variant-numeric: lining-nums tabular-nums; }
+.f-big.word { font-size: clamp(3.5rem, 14vw, 9rem); }
+.f-big small { font-family: var(--mono); font-size: .2em; font-weight: 400; margin-left: .15em; }
+.f-sub { font-family: var(--ui); font-size: 16px; color: var(--n400); max-width: 40ch; }
+.f-clock { font-family: var(--mono); font-size: clamp(2rem, 6vw, 3.5rem); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.focus-next { border-top: 1px solid var(--n600); padding-block: 14px; min-height: 64px; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--ui); font-size: clamp(1rem, 2.5vw, 1.35rem); }
+.focus-next .cd { font-size: 1.5em; }
+.focus-btns { display: flex; border: 1px solid var(--paper); }
+.focus-btns .btn + .btn { border-left: 1px solid var(--n600); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1023px) {
+  .bean-grid { grid-template-columns: repeat(2, 1fr); }
+  .taste-main, .taste-log { grid-column: 1 / -1; }
+  .taste-main { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .calc, .stats, .note-main, .note-side, .brew-title, .timer, .now-cur, .now-next { grid-column: 1 / -1; }
+  .calc, .note-main { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .now-cur { border-right: 0; border-bottom: 1px solid var(--n600); }
+}
+@media (max-width: 767px) {
+  .bean-grid { grid-template-columns: 1fr; }
+  .bean { min-height: 0; }
+  .mast-sub { grid-template-columns: 1fr; text-align: center; }
+  .mast-sub span:last-child { text-align: center; }
+  .calc, .note-main, .note-side { padding: 20px 16px; }
+  .brew { padding: 24px 16px 28px; }
+  .ctl { grid-template-columns: 1fr; gap: 6px; }
+  .fields { grid-template-columns: 1fr; gap: 16px; }
+  .swap { display: none; }
+  .cols { columns: 1; }
+  .steps-head { display: none; }
+  .step { grid-template-columns: 44px minmax(0,1fr) auto; grid-template-areas: "n b b" "n t ml"; gap: 4px 14px; }
+  .step-num { grid-area: n; align-self: start; }
+  .step-body { grid-area: b; }
+  .step-time { grid-area: t; font-size: 14px; }
+  .step-ml.cum { grid-area: ml; }
+  .step-ml.amt { display: none; }
+  .taste-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .taste-grid button:first-child { grid-column: span 2; }
+  .taste-main, .taste-log { padding: 20px 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .stat .v { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+  * { transition: none !important; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="meta-top">
+      <span id="vol">Vol. 1</span>
+      <span id="today"></span>
+      <span>台北版</span>
+    </div>
+    <h1 class="mast-title">手沖日報</h1>
+    <div class="mast-sub">
+      <span>每一杯都照比例來</span>
+      <span class="en">The Daily Brew</span>
+      <span>定價 · 一杯咖啡</span>
+    </div>
+  </header>
+
+  <section class="sec" aria-labelledby="h-bean">
+    <div class="sec-head">
+      <div>
+        <div class="label">第一版 · 選豆</div>
+        <h2 id="h-bean">今天沖哪一款豆？</h2>
+      </div>
+      <p>焙度決定水溫。越淺的豆子越緻密，需要更熱的水才萃取得出來。</p>
+    </div>
+    <div class="bean-grid" id="beanGrid" role="group" aria-label="豆款"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-calc">
+    <div class="sec-head">
+      <div>
+        <div class="label">第二版 · 器具與比例</div>
+        <h2 id="h-calc">粉水換算</h2>
+      </div>
+      <p>輸入粉量或水量其中一個，另一個依比例自動算出。</p>
+    </div>
+    <div class="split">
+      <div class="calc newsprint-texture">
+        <div class="ctl">
+          <span class="label">器具</span>
+          <div class="seg" id="deviceSeg" role="group" aria-label="器具">
+            <button type="button" id="dev-pour" data-device="pour">手沖</button>
+            <button type="button" id="dev-drip" data-device="drip">濾掛</button>
+            <button type="button" id="dev-moka" data-device="moka">摩卡壺</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <span class="label">沖法</span>
+          <div class="seg" id="methodSeg" role="group" aria-label="沖法">
+            <button type="button" id="m-three" data-method="three">三段式</button>
+            <button type="button" id="m-46" data-method="46">4:6 法</button>
+          </div>
+        </div>
+        <div class="ctl" id="flavorCtl">
+          <span class="label">風味</span>
+          <div class="seg" id="flavorSeg" role="group" aria-label="4:6 前段風味">
+            <button type="button" id="f-sweet" data-flavor="sweet">偏甜</button>
+            <button type="button" id="f-bal" data-flavor="balance">平衡</button>
+            <button type="button" id="f-bright" data-flavor="bright">偏酸亮</button>
+          </div>
+        </div>
+        <div class="ctl" id="icedCtl">
+          <span class="label">飲用</span>
+          <div class="seg" id="icedSeg" role="group" aria-label="熱飲或冰手沖">
+            <button type="button" id="ice-0" data-iced="0">熱飲</button>
+            <button type="button" id="ice-1" data-iced="1">冰手沖</button>
+          </div>
+        </div>
+        <div class="ctl" id="potCtl">
+          <span class="label">壺型</span>
+          <div class="seg" id="potSeg" role="group" aria-label="摩卡壺杯數">
+            <button type="button" id="pot-1" data-pot="1">1 杯</button>
+            <button type="button" id="pot-2" data-pot="2">2 杯</button>
+            <button type="button" id="pot-3" data-pot="3">3 杯</button>
+            <button type="button" id="pot-4" data-pot="4">4 杯</button>
+            <button type="button" id="pot-6" data-pot="6">6 杯</button>
+          </div>
+        </div>
+        <div class="ctl" id="milkCtl">
+          <span class="label">牛奶</span>
+          <div class="seg" id="milkSeg" role="group" aria-label="摩卡壺拿鐵牛奶比例">
+            <button type="button" id="milk-0" data-milk="0">不加</button>
+            <button type="button" id="milk-2" data-milk="2">拿鐵 1:2</button>
+            <button type="button" id="milk-3" data-milk="3">拿鐵 1:3</button>
+          </div>
+        </div>
+        <div class="ctl" id="strengthCtl">
+          <span class="label">濃度</span>
+          <div class="seg" id="strengthSeg" role="group" aria-label="4:6 後段濃度">
+            <button type="button" id="s-light" data-strength="light">淡</button>
+            <button type="button" id="s-std" data-strength="std">標準</button>
+            <button type="button" id="s-strong" data-strength="strong">濃</button>
+          </div>
+        </div>
+        <p class="hint" id="methodHint"></p>
+
+        <div class="fields">
+          <div class="field" id="fieldBeans">
+            <label class="label" for="inBeans">咖啡粉</label>
+            <div class="field-row">
+              <button type="button" class="step-btn" data-step="beans:-0.5" aria-label="粉量減 0.5 克">−</button>
+              <input id="inBeans" type="number" inputmode="decimal" step="0.1" min="1">
+              <span class="unit">g</span>
+              <button type="button" class="step-btn" data-step="beans:0.5" aria-label="粉量加 0.5 克">+</button>
+            </div>
+          </div>
+          <div class="swap" aria-hidden="true">⇄</div>
+          <div class="field" id="fieldWater">
+            <label class="label" for="inWater">熱水</label>
+            <div class="field-row">
+              <button type="button" class="step-btn" data-step="water:-10" aria-label="水量減 10 毫升">−</button>
+              <input id="inWater" type="number" inputmode="numeric" step="1" min="10">
+              <span class="unit">ml</span>
+              <button type="button" class="step-btn" data-step="water:10" aria-label="水量加 10 毫升">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctl" id="ratioCtl">
+          <span class="label">粉水比</span>
+          <div class="ratios" id="ratios" role="group" aria-label="粉水比"></div>
+        </div>
+        <p class="warn" id="warn" hidden></p>
+      </div>
+
+      <aside class="stats" aria-label="本次沖煮參數">
+        <div class="stat-hero">
+          <div class="label">本次配方</div>
+          <div class="big" id="heroNum">20<span>g</span> / 300<span>ml</span></div>
+          <div class="hero-sub" id="heroSub"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><span class="label">水溫</span><span class="v" id="stTemp">93°C</span></div>
+          <div class="stat"><span class="label">總時間</span><span class="v" id="stTime">3:30</span></div>
+          <div class="stat"><span class="label">粉水比</span><span class="v" id="stRatio">1:15</span></div>
+          <div class="stat"><span class="label" id="stPoursL">注水段數</span><span class="v" id="stPours">5</span></div>
+          <div class="stat wide"><span class="label">研磨</span><span class="t" id="stGrind"></span></div>
+        </div>
+        <div class="fig">Fig. 2.1 · 參數依焙度與沖法自動建議</div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+
+  <section class="brew inverted" aria-labelledby="h-brew">
+    <div class="brew-head">
+      <div class="brew-title">
+        <div class="label">第三版 · 沖煮步驟</div>
+        <h2 id="h-brew">4:6 沖煮法</h2>
+        <p class="sub" id="brewSub"></p>
+      </div>
+      <div class="timer">
+        <div class="clock-row">
+          <div class="clock" id="clock" aria-live="off">0:00</div>
+          <div class="clock-of"><div class="label">預計</div><span id="clockEnd">3:30</span></div>
+        </div>
+        <div class="timer-btns">
+          <button type="button" class="btn btn-go" id="btnGo">開始計時</button>
+          <button type="button" class="btn btn-ghost" id="btnNext" hidden>看到了，下一步</button>
+          <button type="button" class="btn btn-ghost" id="btnFocus">沖煮模式</button>
+          <button type="button" class="btn btn-ghost" id="btnReset">重設</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="now" aria-live="polite">
+      <div class="now-cur"><div class="label">現在</div><strong id="nowTitle"></strong><p id="nowHow"></p></div>
+      <div class="now-next"><div class="label">下一段</div><strong id="nextTitle"></strong><p id="nextHow"></p></div>
+    </div>
+
+    <div class="timeline" id="timeline" aria-hidden="true"></div>
+    <div class="tl-ticks" id="ticks" aria-hidden="true"></div>
+
+    <p class="scale-note" id="scaleNote"></p>
+    <div class="steps-head" aria-hidden="true">
+      <span>段</span><span>時間</span><span>注水方式</span><span id="hAmt">本段</span><span id="hCum">秤上讀數</span>
+    </div>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="split taste" id="tasting" aria-labelledby="h-taste">
+    <div class="taste-main">
+      <div><div class="label">第四版 · 品嚐</div><h3 class="h3" id="h-taste">這杯喝起來如何？</h3></div>
+      <div class="recipe-line" id="recipeLine"></div>
+      <div class="taste-grid" id="tasteGrid" role="group" aria-label="風味感受">
+        <button type="button" id="t-good" data-taste="good">剛剛好<small>平衡、順口</small></button>
+        <button type="button" id="t-sour" data-taste="sour">偏酸、單薄<small>尖酸、鹹、水感</small></button>
+        <button type="button" id="t-bitter" data-taste="bitter">苦、澀<small>喉嚨乾、尾韻刺</small></button>
+        <button type="button" id="t-weak" data-taste="weak">太淡<small>像水、沒味道</small></button>
+        <button type="button" id="t-strong" data-taste="strong">太濃<small>厚重、喝不下</small></button>
+      </div>
+      <div class="advice" id="advice" hidden>
+        <div class="advice-head"><span id="advTitle"></span><span id="advCause"></span></div>
+        <ol id="advList"></ol>
+        <div class="advice-foot"><span>一次只改一個條件，下一杯才知道是哪個改變有效。</span><button type="button" class="btn-line" id="advApply" hidden></button></div>
+      </div>
+      <div class="form-row">
+        <div class="field-sm"><span class="label">評分</span>
+          <div class="rating" id="rating" role="group" aria-label="評分 1 到 5">
+            <button type="button" id="rate-1" data-rate="1" aria-label="1 分">1</button><button type="button" id="rate-2" data-rate="2" aria-label="2 分">2</button><button type="button" id="rate-3" data-rate="3" aria-label="3 分">3</button><button type="button" id="rate-4" data-rate="4" aria-label="4 分">4</button><button type="button" id="rate-5" data-rate="5" aria-label="5 分">5</button>
+          </div>
+        </div>
+        <div class="field-sm"><label class="label" for="inGrind">磨豆機刻度（選填）</label><input class="text-in" id="inGrind" type="text" placeholder="例如 C40 第 24 格"></div>
+      </div>
+      <div class="field-sm"><label class="label" for="inNote">筆記（選填）</label><textarea class="text-in" id="inNote" rows="2" placeholder="例如 柑橘、紅茶感，尾韻偏短"></textarea></div>
+      <div class="save-row"><button type="button" class="btn-solid" id="btnSave">記錄這一杯</button><span class="saved-msg" id="savedMsg" role="status"></span></div>
+    </div>
+    <aside class="taste-log" aria-labelledby="h-log">
+      <div><div class="label">沖煮紀錄 · 存在這個瀏覽器</div><h3 class="h3" id="h-log">我的配方本</h3></div>
+      <ul class="log-list" id="logList"></ul>
+      <div class="log-foot"><span id="logCount"></span><button type="button" class="btn-line" id="btnCsv">複製紀錄（CSV）</button></div>
+      <textarea class="text-in" id="csvBox" rows="5" hidden readonly aria-label="CSV 格式的沖煮紀錄"></textarea>
+    </aside>
+  </section>
+
+  <section class="split notes" aria-labelledby="h-note">
+    <article class="note-main">
+      <div class="label">編輯手記</div>
+      <h3 id="h-note"></h3>
+      <div class="cols" id="noteBody"></div>
+    </article>
+    <aside class="note-side">
+      <div class="label">沖煮要點</div>
+      <h3>三件事記住</h3>
+      <ul class="tips" id="tips"></ul>
+    </aside>
+  </section>
+
+  <div class="orn" aria-hidden="true">&#x2727; &#x2727; &#x2727;</div>
+
+  <footer>
+    <span>Edition: Vol 1.0 · Brewed in Taipei</span>
+    <span>數值為建議起點，依口味微調</span>
+  </footer>
+</div>
+
+
+<div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-label="沖煮模式">
+  <div class="focus-bar"><div class="label" id="fMethod"></div><button type="button" class="focus-close" id="fClose">離開</button></div>
+  <div class="focus-prog"><div id="fProg"></div></div>
+  <div class="focus-main">
+    <div class="f-step" id="fStep"></div>
+    <div class="f-big" id="fBig"></div>
+    <div class="f-sub" id="fSub"></div>
+    <div class="f-clock" id="fClock">0:00</div>
+  </div>
+  <div class="focus-next" id="fNext" aria-live="polite"></div>
+  <div class="focus-btns">
+    <button type="button" class="btn btn-go" id="fGo">開始計時</button>
+    <button type="button" class="btn btn-ghost" id="fNextBtn" hidden>看到了，下一步</button>
+    <button type="button" class="btn btn-ghost" id="fLog" hidden>記錄這杯</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const BEANS = {
+    geisha: { roast: '淺焙', en: 'Light · Specialty', name: '精品莊園豆', ex: '藝伎、耶加雪菲、肯亞', temp: 93, range: '92–94', ratio: 15, method: '46', moka: false },
+    light:  { roast: '淺焙', en: 'Light', name: '一般淺焙', ex: '水洗、日曬單品', temp: 92, range: '90–93', ratio: 15, method: 'three', moka: false },
+    medium: { roast: '中焙', en: 'Medium', name: '中焙', ex: '哥倫比亞、巴西、瓜地馬拉', temp: 89, range: '87–90', ratio: 15, method: 'three', moka: true },
+    dark:   { roast: '深焙', en: 'Dark', name: '深焙', ex: '曼特寧、深焙配方', temp: 85, range: '83–86', ratio: 14, method: 'three', moka: true }
+  };
+  const METHOD = { three: '三段式沖煮法', '46': '4:6 沖煮法', drip: '濾掛式沖煮', moka: '摩卡壺' };
+  const GRIND = { three: '中細研磨，粗細像細砂糖', '46': '中粗研磨，粗細像粗砂糖', drip: '濾掛袋已研磨，不需調整', moka: '細研磨，比義式咖啡粗一點' };
+  const FLAVOR = { sweet: [5/12, 7/12], balance: [.5, .5], bright: [7/12, 5/12] };
+  const STRENGTH = { light: 2, std: 3, strong: 4 };
+  const POTS = { 1: { b: 6.5, w: 60 }, 2: { b: 11, w: 100 }, 3: { b: 16, w: 150 }, 4: { b: 21, w: 200 }, 6: { b: 29, w: 300 } };
+  const CN = ['一','二','三','四','五','六','七','八','九','十'];
+  const TASTE = {
+    good:   { t: '剛剛好', cause: '配方合適' },
+    sour:   { t: '偏酸、單薄', cause: '萃取不足' },
+    bitter: { t: '苦、澀', cause: '萃取過度' },
+    weak:   { t: '太淡', cause: '濃度太低' },
+    strong: { t: '太濃', cause: '濃度太高' }
+  };
+  const V60 = '時間以 V60 錐形濾杯為準；平底濾杯流速較慢，總時間會稍長。';
+
+  const NOTES = {
+    three: {
+      title: '悶蒸、主萃取、收尾，一套適合所有焙度的節奏',
+      body: [
+        '三段式是最常見的手沖節奏。第一段用粉量兩倍的水悶蒸，讓粉層裡的二氧化碳先排出，後面的水才能均勻穿過咖啡粉。',
+        '第二段一次把水量帶到六成左右，這是主要的萃取階段；第三段等水位降一半再補足剩下的水，用來調整整體的厚度。整個過程大約兩分半，淺、中、深焙都適用，只要依焙度調整水溫即可。' + V60
+      ],
+      tips: ['悶蒸時粉床會膨脹冒泡，越新鮮的豆子越明顯', '注水避開濾紙邊緣，水才不會從旁邊直接流走', '總時間超過 3:30 代表磨太細，少於 2:00 代表磨太粗']
+    },
+    '46': {
+      title: '前四成定酸甜，後六成定濃淡',
+      body: [
+        '4:6 沖煮法由粕谷哲在 2016 年世界手沖咖啡大賽奪冠時使用。總水量切成兩部分：前 40% 分兩次注入，第一次注得少會偏甜，注得多會偏酸亮。',
+        '後 60% 分成幾次注入決定濃度，次數越多越濃。每 45 秒注一次，每次都要等水完全滴落。研磨比一般手沖粗，很適合淺焙的精品莊園豆，能把花果香與明亮的酸質表現出來。' + V60
+      ],
+      tips: ['研磨要比三段式粗，否則每段都會滴不完', '每段注完要等水滴落再注下一段', '想改風味先調「風味」，想改濃淡再調「濃度」']
+    },
+    drip: {
+      title: '把手沖縮小成一個紙袋',
+      body: [
+        '濾掛袋的容量小，關鍵是少量多次。悶蒸之後，每次只注到快碰到濾袋邊緣，等水位下降再注下一次，避免水從袋子上方溢出，沒經過咖啡粉就流進杯子。',
+        '杯子不要太淺，濾袋才不會泡在咖啡裡。注完水直接拿起濾袋，不要擠壓，擠出來的通常是苦澀味。'
+      ],
+      tips: ['掛好濾袋後輕拍幾下，讓咖啡粉鋪平', '壺嘴壓低、細水柱，每段約 40 ml', '用細口壺比一般熱水瓶好控制很多']
+    },
+    moka: {
+      title: '用蒸氣把熱水推過粉層',
+      body: [
+        '摩卡壺底座的水加熱後產生蒸氣壓力，把熱水往上推過粉槽，萃取出的咖啡流進上壺。壓力比手沖高、比義式咖啡機低，所以味道濃厚，介於兩者之間。',
+        '水量和粉量由壺的大小決定：水加到安全閥下方，粉裝滿粉槽抹平即可。出液的時間取決於爐火，所以這裡的時間只是估計，看到咖啡顏色轉淡就要離火，再晚就會萃出苦味。'
+      ],
+      tips: ['水不可以超過安全閥，粉也不要壓實，否則壓力過大很危險', '加熱時不要離開爐邊，顏色轉淡或出現嘶嘶聲就離火', '電磁爐需要不鏽鋼壺或導磁轉接盤，鋁壺不能直接用']
+    }
+  };
+  const ICED_NOTE = '冰手沖把總水量拆成六成熱水、四成冰塊。粉量不變，所以沖出來的是濃縮版本，滴進下壺後馬上被冰塊降溫，香氣也被鎖住；冰塊融化後剛好回到正常濃度。研磨可以比熱飲細一格，補足少掉的水量。';
+
+  const S = { bean: 'geisha', device: 'pour', method: '46', flavor: 'balance', strength: 'std', ratio: 15, beans: 20, water: 300, last: 'beans', pot: 3, milk: 0, iced: false };
+  const TS = { taste: null, rating: 0 };
+  let plan = null;
+  const T = { on: false, acc: 0, start: 0, idx: -1, man: 0, raf: 0, audio: null, lock: null, cdKey: null, finished: false };
+
+  const $ = s => document.querySelector(s);
+  const round1 = v => Math.round(v * 10) / 10;
+  const fmt = sec => { sec = Math.max(0, Math.floor(sec)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
+  const eff = () => S.device === 'pour' ? S.method : S.device;
+  const isMoka = () => S.device === 'moka';
+  const isIced = () => S.device === 'pour' && S.iced;
+  const fmtG = v => String(round1(v));
+  const mokaYield = () => Math.round(S.water * .8);
+  const milkMl = () => S.milk ? Math.round(mokaYield() * S.milk / 10) * 10 : 0;
+  const hotWater = () => isIced() ? Math.round(S.water * .6) : S.water;
+  const iceG = () => S.water - hotWater();
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const setHTML = (el, html) => { if (el && el._v !== html) { el.innerHTML = html; el._v = html; } };
+
+  function recipeTitle(o) {
+    const bean = BEANS[o.bean];
+    let m;
+    if (o.device === 'moka') m = (o.milk ? '摩卡壺拿鐵' : '摩卡壺') + ` · ${o.pot} 杯`;
+    else if (o.device === 'drip') m = '濾掛';
+    else m = (o.iced ? '冰手沖 ' : '') + (o.method === '46' ? '4:6' : '三段式');
+    return `${bean.name} · ${m}`;
+  }
+
+  function recalc() {
+    if (isMoka()) return;
+    if (S.last === 'beans') S.water = Math.round(S.beans * S.ratio);
+    else S.beans = round1(S.water / S.ratio);
+  }
+
+  function build() {
+    const b = S.beans, m = eff(), steps = [];
+    if (m === 'moka') {
+      const w = S.water, milk = milkMl();
+      const rows = [
+        { label: '準備', t: null, how: '底座倒入熱水到安全閥下方；粉槽裝滿抹平，不要壓粉，把邊緣擦乾淨', look: `水 ${w} ml · 粉 ${fmtG(b)} g` },
+        { label: '加熱', t: 0, dur: 150, ph: 'heat', how: '用毛巾握住底座鎖緊上壺，開中小火，壺蓋打開', look: '按下開始的同時開火' },
+        { label: '出液', t: 150, dur: 60, ph: 'flow', how: '咖啡開始流出就把火轉小，讓它慢慢流', look: '深褐色，像蜂蜜一樣緩慢流出' },
+        { label: '離火', t: 210, dur: 30, ph: 'off', how: '立刻離火，用濕毛巾包住底座或沖冷水降溫，停止萃取', look: '顏色轉淡黃，開始嘶嘶噴濺' }
+      ];
+      if (milk) rows.push({ label: '加牛奶', t: 240, dur: 40, ph: 'milk', how: '牛奶加熱到 60–65°C（不要煮滾），打出奶泡後倒入咖啡', look: `牛奶 ${milk} ml，咖啡約 ${mokaYield()} ml` });
+      const end = rows[rows.length - 1].t + rows[rows.length - 1].dur;
+      rows.push({ label: '完成', t: end, final: true, how: milk ? '輕輕攪拌，讓奶泡留在上層' : '上壺的咖啡攪拌一下再倒出，濃淡比較均勻' });
+      rows.forEach((r, i) => r.ri = i);
+      return { manual: true, steps: rows.filter(r => r.t != null && !r.final), rows, end };
+    }
+    const w = hotWater();
+    const push = (label, t, dur, how, cum) => {
+      const prev = steps.length ? steps[steps.length - 1].cum : 0;
+      steps.push({ label, t, dur, how, cum, amt: cum - prev, ri: steps.length });
+    };
+    let end, finalHow;
+    if (m === 'three') {
+      const bloom = Math.min(Math.round(b * 2), Math.round(w * .25));
+      push('悶蒸', 0, 10, '由中心向外小螺旋，讓所有粉都吃到水，接著靜置', bloom);
+      push('第一段', 40, 25, '從中心往外繞圈，水柱細而穩，避開濾紙邊緣', Math.round(w * .6));
+      push('第二段', 80, 20, '水位降到一半時開始，中心小圈慢慢注完', w);
+      end = 150; finalHow = '等水滴完，移開濾杯，輕搖咖啡讓風味均勻';
+    } else if (m === '46') {
+      const f = FLAVOR[S.flavor], k = STRENGTH[S.strength];
+      const fr = [.4 * f[0], .4];
+      for (let j = 1; j <= k; j++) fr.push(.4 + .6 * j / k);
+      fr.forEach((x, i) => {
+        const how = i === 0 ? '中心向外繞圈，均勻濕潤所有粉，兼作悶蒸'
+          : i === 1 ? '同樣繞圈注入。前兩段的比例決定酸甜'
+          : '中心繞小圈注入，等水滴完再注下一段。後段次數決定濃度';
+        push('第' + CN[i] + '段', i * 45, 12, how, i === fr.length - 1 ? w : Math.round(w * x));
+      });
+      end = Math.max(210, (fr.length - 1) * 45 + 60);
+      finalHow = '時間到就移開濾杯，不必等最後幾滴';
+    } else {
+      const bloom = Math.min(Math.round(b * 2), Math.round(w * .2));
+      const rest = w - bloom, n = Math.max(3, Math.ceil(rest / 45));
+      push('悶蒸', 0, 8, '細水柱從中心注入，濕潤粉層後靜置', bloom);
+      for (let i = 0; i < n; i++) {
+        push('第' + CN[i] + '段', 30 + i * 30, 10, '壺嘴壓低，中心小圈注入，水面不超過濾袋邊緣', i === n - 1 ? w : bloom + Math.round(rest * (i + 1) / n));
+      }
+      end = 30 + n * 30; finalHow = '拿起濾袋，不要擠壓';
+    }
+    if (isIced()) finalHow = '移開濾杯，搖晃下壺讓冰塊融化降溫，再倒進裝冰的杯子';
+    const rows = steps.concat([{ label: '完成', t: end, how: finalHow, final: true, cum: w, ri: steps.length }]);
+    return { manual: false, steps, rows, end };
+  }
+
+  /* ---------- Rendering ---------- */
+  function renderBeans() {
+    const moka = isMoka();
+    $('#beanGrid').innerHTML = Object.entries(BEANS).map(([k, v]) => {
+      const badge = moka ? (v.moka ? '適合摩卡壺' : '摩卡壺易偏酸') : '建議 ' + (v.method === '46' ? '4:6' : '三段式');
+      return `
+      <button type="button" class="bean" id="bean-${k}" data-bean="${k}" aria-pressed="${S.bean === k}">
+        <span class="label">${v.roast} · ${v.en}</span>
+        <h3>${v.name}</h3>
+        <p class="bean-ex">${v.ex}</p>
+        <span class="bean-foot">
+          <span class="bean-temp">${v.temp}°C<small>${v.range}°C</small></span>
+          <span class="badge"${moka && !v.moka ? ' style="background:var(--n600)"' : ''}>${badge}</span>
+        </span>
+      </button>`;
+    }).join('');
+  }
+
+  function setPressed(sel, attr, val) {
+    document.querySelectorAll(sel + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(val))));
+  }
+
+  function renderControls() {
+    const bean = BEANS[S.bean], m = eff(), moka = isMoka();
+    setPressed('#deviceSeg', 'device', S.device);
+    setPressed('#methodSeg', 'method', S.device === 'pour' ? S.method : '');
+    setPressed('#flavorSeg', 'flavor', S.flavor);
+    setPressed('#strengthSeg', 'strength', S.strength);
+    setPressed('#potSeg', 'pot', S.pot);
+    setPressed('#milkSeg', 'milk', S.milk);
+    setPressed('#icedSeg', 'iced', S.iced ? 1 : 0);
+    ['three', '46'].forEach(k => {
+      const btn = $('#m-' + k);
+      btn.disabled = S.device !== 'pour';
+      btn.innerHTML = (k === 'three' ? '三段式' : '4:6 法') + (bean.method === k && S.device === 'pour' ? ' <span class="badge">建議</span>' : '');
+    });
+    $('#flavorCtl').hidden = m !== '46';
+    $('#strengthCtl').hidden = m !== '46';
+    $('#potCtl').hidden = !moka;
+    $('#milkCtl').hidden = !moka;
+    $('#icedCtl').hidden = S.device !== 'pour';
+    $('#ratioCtl').hidden = moka;
+
+    let hint = '';
+    if (m === 'drip') hint = '濾掛固定使用少量多次的注法，沖法選項不適用。';
+    else if (moka) hint = bean.moka
+      ? '摩卡壺使用固定流程：水量和粉量由壺的大小決定，兩者不互相換算。'
+      : '摩卡壺溫度高、壓力大，淺焙容易偏酸澀，較適合中深焙。可以照樣沖，但建議換豆。';
+    else {
+      const parts = [];
+      if (m === '46' && !['geisha', 'light'].includes(S.bean)) parts.push('4:6 法較適合淺焙；中深焙用 4:6 容易偏苦，建議改用三段式。');
+      if (isIced()) parts.push(`冰手沖：熱水 ${hotWater()} ml 沖煮，下壺先放 ${iceG()} g 冰塊。研磨比熱飲細一格。`);
+      parts.push('步驟以 V60 錐形濾杯為準。');
+      hint = parts.join(' ');
+    }
+    $('#methodHint').textContent = hint;
+    $('#methodHint').hidden = !hint;
+
+    const rec = bean.ratio;
+    $('#ratios').innerHTML = [13, 14, 15, 16, 17].map(r =>
+      `<button type="button" id="r-${r}" data-ratio="${r}" aria-pressed="${S.ratio === r}" class="${r === rec ? 'rec' : ''}" ${r === rec ? 'title="此豆款建議比例"' : ''}>1:${r}</button>`).join('');
+
+    $('#fieldBeans').classList.toggle('is-source', !moka && S.last === 'beans');
+    $('#fieldWater').classList.toggle('is-source', !moka && S.last === 'water');
+    $('label[for="inWater"]').textContent = isIced() ? '總水量（熱水＋冰）' : '熱水';
+    $('.swap').textContent = moka ? '+' : '⇄';
+  }
+
+  function syncInputs(except) {
+    if (except !== 'beans') $('#inBeans').value = fmtG(S.beans);
+    if (except !== 'water') $('#inWater').value = S.water;
+  }
+
+  function warnings() {
+    const m = eff(), w = [];
+    if (m === 'moka') {
+      const p = POTS[S.pot];
+      if (S.water > p.w + 10) w.push(`${S.pot} 杯壺的水量約 ${p.w} ml，超過會淹過安全閥，請減少。`);
+      if (S.beans > p.b + 2) w.push(`${S.pot} 杯壺的粉槽約裝 ${fmtG(p.b)} g，裝太多會鎖不緊或壓力過大。`);
+      if (S.beans < p.b - 3) w.push('粉槽沒裝滿，水會太快穿過，味道偏淡。');
+    }
+    if (m === 'drip' && S.beans > 14) w.push('一般濾掛袋只裝 10–12 g，超過 14 g 的量要用兩包或改用手沖。');
+    if (m === 'drip' && S.water > 220) w.push('水量超過 220 ml，杯子可能裝不下，濾袋也容易泡在咖啡裡。');
+    if (m === '46' && hotWater() < 180) w.push('熱水少於 180 ml 時，4:6 每段注水量太小，建議粉量多一點。');
+    if (m !== 'drip' && m !== 'moka' && S.beans > 40) w.push('粉量超過 40 g，一般濾杯可能裝不下，建議分兩次沖。');
+    if (S.beans < 5) w.push('粉量太少，很難萃取穩定，建議至少 6 g。');
+    const el = $('#warn'); el.textContent = w.join(' '); el.hidden = !w.length;
+  }
+
+  function renderStats() {
+    const bean = BEANS[S.bean], m = eff();
+    $('#heroNum').innerHTML = `${fmtG(S.beans)}<span>g</span> / ${S.water}<span>ml</span>`;
+    $('#stGrind').textContent = GRIND[m] + (isIced() ? '；冰手沖再細一格' : '');
+    $('#stTime').textContent = '約 ' + fmt(plan.end);
+    if (m === 'moka') {
+      const y = mokaYield(), milk = milkMl();
+      $('#heroSub').textContent = `約可萃取 ${y} ml` + (milk ? ` · 加牛奶 ${milk} ml，共約 ${y + milk} ml` : '');
+      $('#stTemp').innerHTML = `70–80°C<small>熱水入底座</small>`;
+      $('#stRatio').textContent = '1:' + round1(S.water / S.beans);
+      $('#stPoursL').textContent = milk ? '咖啡 + 牛奶' : '預計萃取';
+      $('#stPours').textContent = milk ? `${y}+${milk}` : `${y} ml`;
+    } else {
+      $('#heroSub').textContent = isIced()
+        ? `熱水 ${hotWater()} ml 沖煮 + 冰塊 ${iceG()} g 放在下壺`
+        : `約可萃取 ${Math.max(0, Math.round(S.water - S.beans * 2))} ml（粉約吸走兩倍重的水）`;
+      $('#stTemp').innerHTML = `${bean.temp}°C<small>${bean.range}</small>`;
+      $('#stRatio').textContent = '1:' + S.ratio;
+      $('#stPoursL').textContent = '注水段數';
+      $('#stPours').textContent = plan.steps.length + ' 段';
+    }
+  }
+
+  function renderTicker() {
+    const bean = BEANS[S.bean], m = eff();
+    const items = [
+      `<span class="badge">今日配方</span>`,
+      `${bean.roast} · ${bean.name}`,
+      m === 'moka' ? `熱水 70–80°C` : `水溫 ${bean.temp}°C`,
+      m === 'moka' ? `${S.pot} 杯摩卡壺` : (isIced() ? '冰' : '') + METHOD[m],
+      `粉 ${fmtG(S.beans)} g`,
+      isIced() ? `熱水 ${hotWater()} ml` : `水 ${S.water} ml`,
+      ...(isIced() ? [`冰塊 ${iceG()} g`] : []),
+      m === 'moka' ? `約萃取 ${mokaYield()} ml` : `比例 1:${S.ratio}`,
+      ...(m === 'moka' && S.milk ? [`牛奶 ${milkMl()} ml`] : []),
+      `${GRIND[m].split('，')[0]}`, `總時間 約 ${fmt(plan.end)}`,
+      m === 'moka' ? `${plan.steps.length} 個階段` : `${plan.steps.length} 段注水`
+    ];
+    const group = `<div class="ticker-group">${items.join('<span class="dot">◆</span>')}<span class="dot">◆</span></div>`;
+    $('#ticker').innerHTML = group + group;
+  }
+
+  function timeLabel(r) {
+    if (r.actual != null) return fmt(r.actual);
+    if (r.t == null) return '開火前';
+    return (plan.manual && r.t > 0 ? '約 ' : '') + fmt(r.t);
+  }
+
+  function renderBrew() {
+    const bean = BEANS[S.bean], m = eff(), moka = m === 'moka';
+    $('#h-brew').textContent = moka ? (S.milk ? '摩卡壺拿鐵' : '摩卡壺') : (isIced() ? '冰手沖・' : '') + METHOD[m];
+    const tempTxt = moka ? `${S.pot} 杯壺` : `${bean.temp}°C`;
+    const waterTxt = isIced() ? `熱水 ${hotWater()} ml + 冰 ${iceG()} g` : `${S.water} ml 水`;
+    $('#brewSub').textContent = `${bean.roast}${bean.name === bean.roast ? '' : '・' + bean.name} · ${fmtG(S.beans)} g 粉 · ${waterTxt} · ${tempTxt}`
+      + (moka ? ' · 時間依爐火而定，看狀態按「下一步」' : S.device === 'pour' ? ' · 以 V60 為準' : '');
+    $('#clockEnd').textContent = (moka ? '約 ' : '') + fmt(plan.end);
+    $('#hAmt').textContent = moka ? '' : '本段';
+    $('#hCum').textContent = moka ? '' : '秤上讀數';
+    $('#hAmt').previousElementSibling.textContent = moka ? '動作與狀態' : '注水方式';
+    $('#scaleNote').textContent = moka ? '' : isIced()
+      ? '大字是電子秤的讀數：濾杯、粉和冰塊都放好後歸零，水 1 ml 約等於 1 g。'
+      : '大字是電子秤的讀數：放好濾杯和粉後歸零，水 1 ml 約等於 1 g。';
+    $('#scaleNote').hidden = moka;
+
+    $('#steps').innerHTML = plan.rows.map((r, i) => `
+      <li class="step" data-i="${i}">
+        <span class="step-num${r.final ? ' end' : ''}">${r.final ? '✓' : i + 1}</span>
+        <span class="step-time">${timeLabel(r)}</span>
+        <div class="step-body"><h3>${r.label}</h3><p>${r.how}</p>${r.look ? `<p class="look">${r.look}</p>` : ''}</div>
+        <span class="step-ml amt">${r.final || r.amt == null ? '' : `<b>+${r.amt}</b><small>本段</small>`}</span>
+        <span class="step-ml cum">${r.final || r.amt == null ? '' : `<b>${r.cum}</b> g<small>秤上 · 本段 +${r.amt}</small>`}</span>
+      </li>`).join('');
+
+    const total = plan.end + 15;
+    const PH = { heat: 40, flow: 100, off: 25, milk: 60 };
+    const maxAmt = Math.max(1, ...plan.steps.map(s => s.amt || 0));
+    $('#timeline').innerHTML = plan.steps.map(s => {
+      const h = s.ph ? PH[s.ph] : Math.max(s.amt / maxAmt * 100, 12);
+      return `<div class="tl-pour${s.ph ? ' phase ' + s.ph : ''}" data-i="${s.ri}" style="left:${s.t / total * 100}%;width:${Math.max(s.dur / total * 100, 1.2)}%;height:${h}%"></div>`;
+    }).join('') + `<div class="tl-end" style="left:${plan.end / total * 100}%"></div><div class="tl-head" id="tlHead"></div>`;
+    let ticks = '';
+    for (let s = 0; s <= total; s += 30) ticks += `<span style="left:${s / total * 100}%">${fmt(s)}</span>`;
+    $('#ticks').innerHTML = ticks;
+
+    const n = NOTES[m];
+    $('#h-note').textContent = isIced() ? '冰手沖：' + n.title : n.title;
+    const body = isIced() ? n.body.concat([ICED_NOTE]) : n.body;
+    $('#noteBody').innerHTML = body.map((p, i) => `<p${i === 0 ? ' class="dropcap"' : ''}>${p}</p>`).join('');
+    $('#tips').innerHTML = n.tips.map(t => `<li>${t}</li>`).join('');
+    $('#fMethod').textContent = $('#h-brew').textContent + ' · ' + $('#brewSub').textContent.split(' · ').slice(1, 3).join(' · ');
+  }
+
+  function renderRecipeLine() {
+    const bean = BEANS[S.bean];
+    const temp = isMoka() ? '底座熱水' : bean.temp + '°C';
+    const done = T.finished ? ` · 實際 ${fmt(T.acc)}` : '';
+    $('#recipeLine').textContent = `${recipeTitle(S)} · ${fmtG(S.beans)} g / ${S.water} ml${isMoka() ? '' : ' · 1:' + S.ratio} · ${temp}${done}`;
+  }
+
+  function renderAll(except) {
+    plan = build();
+    renderBeans();
+    renderControls();
+    syncInputs(except);
+    warnings();
+    renderStats();
+    renderTicker();
+    renderBrew();
+    renderRecipeLine();
+    if (TS.taste) renderAdvice();
+    T.idx = -2;
+    updateBtn();
+    tick(true);
+  }
+
+  /* ---------- Tasting advice ---------- */
+  function adviceFor(taste) {
+    const m = eff(), temp = BEANS[S.bean].temp;
+    let list = [], apply = null;
+    if (taste === 'good') {
+      list = ['按下方「記錄這一杯」，下次照同樣的配方沖', '想試試變化，只改一個條件，例如水溫上下 1°C'];
+    } else if (taste === 'sour') {
+      if (m === 'moka') list = ['研磨細一點，但不要細到像義式咖啡粉', '粉槽裝滿抹平，不要留空隙', '火稍微大一點，讓出液更順'];
+      else if (m === 'drip') list = ['水溫提高到 92–94°C', '每段之間多等幾秒，讓粉多泡一下', '換烘焙度深一點的濾掛包'];
+      else {
+        list = ['研磨細一格', `水溫提高 1–2°C（${temp}°C 改成 ${temp + 2}°C）`, '注水慢一點，讓總時間拉長 15–20 秒'];
+        if (isIced()) list.push('冰手沖本來就要磨細一點，可以再細一格');
+      }
+    } else if (taste === 'bitter') {
+      if (m === 'moka') list = ['更早離火，咖啡顏色一轉淡就停', '火轉小，讓出液慢而穩', '研磨粗一點'];
+      else if (m === 'drip') list = ['水溫降到 88–90°C', '注完立刻拿起濾袋，不要擠壓', '縮短總時間，不要讓濾袋泡在咖啡裡'];
+      else {
+        list = ['研磨粗一格', `水溫降低 1–2°C（${temp}°C 改成 ${temp - 2}°C）`, '注水避開濾紙邊緣，最後幾滴不必等'];
+        if (m === '46') list.push('確認每段都滴完才注下一段，滴不完代表磨太細');
+      }
+    } else if (taste === 'weak') {
+      if (m === 'moka') list = ['粉槽要裝滿到邊緣', '早一點離火，少萃一點水分'];
+      else if (m === 'drip') list = ['少注 20–30 ml', '換 12 g 以上的濾掛包'];
+      else {
+        const r = Math.max(13, S.ratio - 1);
+        list = r < S.ratio ? [`比例改濃：1:${S.ratio} 改成 1:${r}`, '比例已經夠濃的話，改磨細一格'] : ['比例已經是 1:13，改磨細一格', '或水溫提高 1°C'];
+        if (m === '46') list.push('或把「濃度」改成「濃」，後段多注一次');
+        if (r < S.ratio) apply = r;
+      }
+    } else if (taste === 'strong') {
+      if (m === 'moka') list = ['加熱水稀釋成美式，咖啡和熱水約 1:1', '或改做拿鐵，加牛奶'];
+      else if (m === 'drip') list = ['多注 20–30 ml', '每段注水量稍微增加'];
+      else {
+        const r = Math.min(17, S.ratio + 1);
+        list = r > S.ratio ? [`比例改淡：1:${S.ratio} 改成 1:${r}`, '比例已經夠淡的話，改磨粗一格'] : ['比例已經是 1:17，改磨粗一格', '或水溫降低 1°C'];
+        if (m === '46') list.push('或把「濃度」改成「淡」，後段少注一次');
+        if (r > S.ratio) apply = r;
+      }
+    }
+    return { list, apply };
+  }
+
+  function renderAdvice() {
+    const box = $('#advice');
+    if (!TS.taste) { box.hidden = true; return; }
+    const a = adviceFor(TS.taste);
+    $('#advTitle').textContent = TS.taste === 'good' ? '這組配方可以留下來' : '下一杯這樣改';
+    $('#advCause').textContent = TASTE[TS.taste].cause;
+    $('#advList').innerHTML = a.list.map(x => `<li>${x}</li>`).join('');
+    const btn = $('#advApply');
+    btn.hidden = a.apply == null;
+    if (a.apply != null) { btn.textContent = `套用 1:${a.apply} 到下一杯`; btn.dataset.ratio = a.apply; }
+    box.hidden = false;
+  }
+
+  function renderRating() {
+    document.querySelectorAll('#rating button').forEach(b => {
+      const on = +b.dataset.rate <= TS.rating;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(+b.dataset.rate === TS.rating));
+    });
+  }
+
+  /* ---------- Brew log ---------- */
+  const LOG_KEY = 'daily-brew-log-v1';
+  function loadLog() { try { const v = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  function saveLog(arr) { try { localStorage.setItem(LOG_KEY, JSON.stringify(arr)); return true; } catch (e) { return false; } }
+  let LOG = loadLog();
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function renderLog() {
+    const list = $('#logList');
+    if (!LOG.length) {
+      list.innerHTML = '';
+      list.innerHTML = `<li class="log-empty">還沒有紀錄。沖完一杯後，在左邊選感受和評分，按「記錄這一杯」就會出現在這裡。紀錄只存在這個瀏覽器。</li>`;
+      $('#logCount').textContent = '0 杯';
+      return;
+    }
+    list.innerHTML = LOG.map(e => {
+      const stars = e.rating ? '■'.repeat(e.rating) + '□'.repeat(5 - e.rating) : '';
+      const recipe = `${fmtG(e.beans)} g / ${e.water} ml${e.device === 'moka' ? '' : ' · 1:' + e.ratio} · ${e.device === 'moka' ? '底座熱水' : e.temp + '°C'}${e.time ? ' · ' + fmt(e.time) : ''}`;
+      return `<li class="log-item">
+        <div class="log-top"><span>${fmtDate(e.at)}</span><span>No. ${e.no}</span></div>
+        <h4>${esc(recipeTitle(e))}</h4>
+        <div class="log-recipe">${recipe}</div>
+        <div class="log-meta">${e.taste ? `<span class="chip${e.taste === 'good' ? ' good' : ''}">${TASTE[e.taste].t}</span>` : ''}${stars ? `<span class="stars" aria-label="${e.rating} 分">${stars}</span>` : ''}${e.grind ? `<span class="chip">刻度 ${esc(e.grind)}</span>` : ''}</div>
+        ${e.note ? `<p class="log-note">${esc(e.note)}</p>` : ''}
+        <div class="log-actions">
+          <button type="button" class="btn-line" data-load="${e.id}">照這杯再沖</button>
+          <button type="button" class="btn-line" data-del="${e.id}">刪除</button>
+        </div>
+      </li>`;
+    }).join('');
+    $('#logCount').textContent = `共 ${LOG.length} 杯`;
+  }
+
+  function saveCurrent() {
+    const bean = BEANS[S.bean];
+    const no = LOG.reduce((mx, e) => Math.max(mx, e.no || 0), 0) + 1;
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), no, at: new Date().toISOString(),
+      bean: S.bean, device: S.device, method: S.method, flavor: S.flavor, strength: S.strength,
+      iced: isIced(), pot: S.pot, milk: S.milk, ratio: S.ratio, beans: S.beans, water: S.water,
+      temp: bean.temp, time: T.finished ? Math.round(T.acc) : null,
+      taste: TS.taste, rating: TS.rating, grind: $('#inGrind').value.trim(), note: $('#inNote').value.trim()
+    };
+    LOG.unshift(entry);
+    const ok = saveLog(LOG);
+    renderLog();
+    $('#savedMsg').textContent = ok ? `已記錄為第 ${no} 杯。` : '這個瀏覽器不允許儲存資料，這筆紀錄關閉頁面後會消失。';
+    TS.taste = null; TS.rating = 0; $('#inNote').value = '';
+    setPressed('#tasteGrid', 'taste', ''); renderRating(); renderAdvice();
+  }
+
+  function loadEntry(e) {
+    Object.assign(S, { bean: e.bean, device: e.device, method: e.method || 'three', flavor: e.flavor || 'balance', strength: e.strength || 'std',
+      iced: !!e.iced, pot: e.pot || 3, milk: e.milk || 0, ratio: e.ratio || 15, beans: e.beans, water: e.water, last: 'beans' });
+    if (e.grind) $('#inGrind').value = e.grind;
+    resetTimer(); renderAll();
+    try { const rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; $('#h-calc').scrollIntoView({ behavior: rm ? 'auto' : 'smooth', block: 'start' }); } catch (err) {}
+  }
+
+  function toCSV() {
+    const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const head = ['編號', '日期', '配方', '粉(g)', '水(ml)', '比例', '水溫(°C)', '時間', '感受', '評分', '磨豆機刻度', '筆記'];
+    const rows = LOG.map(e => [e.no, fmtDate(e.at), recipeTitle(e), e.beans, e.water, e.device === 'moka' ? '' : '1:' + e.ratio,
+      e.device === 'moka' ? '' : e.temp, e.time ? fmt(e.time) : '', e.taste ? TASTE[e.taste].t : '', e.rating || '', e.grind, e.note]);
+    return [head].concat(rows).map(r => r.map(q).join(',')).join('\n');
+  }
+
+  /* ---------- Timer ---------- */
+  const elapsed = () => T.acc + (T.on ? (performance.now() - T.start) / 1000 : 0);
+  const started = () => T.on || T.acc > 0 || (plan.manual && T.man > 0);
+
+  function beep(kind) {
+    try {
+      if (!T.audio) return;
+      const spec = { step: [880, .35, .25], final: [660, .8, .25], count: [520, .12, .18] }[kind];
+      const ctx = T.audio, o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = spec[0]; o.type = 'sine';
+      g.gain.setValueAtTime(.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(spec[2], ctx.currentTime + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + spec[1]);
+      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + spec[1] + .1);
+    } catch (e) {}
+  }
+
+  function onFinish() {
+    T.finished = true;
+    renderRecipeLine();
+    $('#savedMsg').textContent = '沖好了，喝一口再選感受。';
+  }
+
+  function tick(force) {
+    const e = elapsed(), st = started();
+    let idx = -1;
+    if (st) {
+      if (plan.manual) idx = T.man;
+      else plan.rows.forEach((r, i) => { if (e >= r.t) idx = i; });
+    }
+    $('#clock').textContent = fmt(e);
+    $('#fClock').textContent = fmt(e);
+    const total = plan.end + 15;
+    const head = $('#tlHead'); if (head) head.style.left = Math.min(e / total * 100, 100) + '%';
+    $('#fProg').style.width = Math.min(e / plan.end * 100, 100) + '%';
+
+    if (idx !== T.idx || force) {
+      if (T.on && idx > T.idx && T.idx >= 0) beep(plan.rows[idx].final ? 'final' : 'step');
+      T.idx = idx;
+      document.querySelectorAll('.step').forEach(li => {
+        const i = +li.dataset.i;
+        li.classList.toggle('active', i === idx);
+        li.classList.toggle('done', st && i < idx);
+        li.querySelector('.step-time').textContent = timeLabel(plan.rows[i]);
+      });
+      document.querySelectorAll('.tl-pour').forEach(d => d.classList.toggle('done', st && +d.dataset.i < idx));
+    }
+
+    // countdown 3-2-1 before the next timed step
+    let cd = 0;
+    const cur = st ? plan.rows[idx] : null, nx = st ? plan.rows[idx + 1] : null;
+    if (T.on && !plan.manual && nx) {
+      const n = Math.ceil(nx.t - e);
+      if (n >= 1 && n <= 3) {
+        cd = n;
+        const key = idx + ':' + n;
+        if (T.cdKey !== key) { T.cdKey = key; beep('count'); }
+      }
+    }
+    const cdHTML = cd ? `<span class="cd">${cd}</span>` : '';
+
+    const bean = BEANS[S.bean];
+    let nowT, nowH, nextT, nextH, fStep, fBig, fWord = false, fSub, fNext;
+    if (!st) {
+      if (plan.manual) {
+        const p = plan.rows[0], h = plan.rows[1];
+        nowT = '準備摩卡壺'; nowH = p.how + '。';
+        nextT = `${h.label}：${h.how.split('，').pop()}`; nextH = '按下開始的同時開火。';
+        fStep = '準備'; fBig = '開火前'; fWord = true; fSub = p.how; fNext = '按「開始計時」的同時開火';
+      } else {
+        const f = plan.rows[0];
+        const prep = `磨好 ${fmtG(S.beans)} g 咖啡粉，濾紙先用熱水沖濕${isIced() ? `，下壺放入 ${iceG()} g 冰塊` : ''}。放上秤歸零，按下開始同時注水。`;
+        nowT = `準備 ${bean.temp}°C 熱水`; nowH = prep;
+        nextT = `${f.label}：注到 ${f.cum} g`; nextH = f.how;
+        fStep = f.label; fBig = `${f.cum}<small>g</small>`; fSub = prep; fNext = '按「開始計時」的同時開始注水';
+      }
+    } else if (plan.manual) {
+      nowT = cur.final ? '完成，可以喝了' : cur.label + (cur.look ? `：${cur.look}` : '');
+      nowH = cur.how;
+      fStep = cur.final ? '完成' : `第 ${idx + 1} 步`; fBig = cur.final ? '可以喝了' : cur.label; fWord = true;
+      fSub = cur.final ? cur.how : (cur.look ? cur.look + '。' : '') + cur.how;
+      if (nx) {
+        const left = nx.t - e;
+        nextT = nx.final ? '完成後按「下一步」' : left > 0 ? `${nx.label} · 預計 ${fmt(left)} 後` : `${nx.label} · 隨時可能開始`;
+        nextH = nx.look ? `看到「${nx.look}」就按下一步。` : nx.how;
+        fNext = nx.look ? `下一步 ${nx.label}：看到「${nx.look}」就按` : `下一步：${nx.label}`;
+      } else {
+        nextT = '沒有下一步了'; nextH = '到下方「品嚐」記錄這杯的味道。實際時間已記在步驟表上。';
+        fNext = '記得記錄這杯的味道';
+      }
+    } else {
+      nowT = cur.final ? '完成，可以喝了' : `${cur.label}：注到 ${cur.cum} g`;
+      nowH = cur.how;
+      fStep = cur.final ? '完成' : cur.label;
+      fBig = cur.final ? '可以喝了' : `${cur.cum}<small>g</small>`; fWord = !!cur.final;
+      fSub = cur.how;
+      if (nx) {
+        const what = nx.final ? '移開濾杯' : `${nx.label}注到 ${nx.cum} g`;
+        nextT = `${cdHTML}${fmt(nx.t - e)} 後 · ${what}`; nextH = nx.how;
+        fNext = `${cdHTML}${fmt(nx.t - e)} 後 · ${what}`;
+      } else {
+        nextT = '沒有下一段了'; nextH = '到下方「品嚐」記錄這杯的味道。';
+        fNext = '記得記錄這杯的味道';
+      }
+    }
+    setHTML($('#nowTitle'), esc(nowT)); setHTML($('#nowHow'), esc(nowH));
+    setHTML($('#nextTitle'), nextT.includes('class="cd"') ? nextT : esc(nextT)); setHTML($('#nextHow'), esc(nextH));
+    if (!$('#focus').hidden) {
+      setHTML($('#fStep'), esc(fStep));
+      setHTML($('#fBig'), fBig);
+      $('#fBig').classList.toggle('word', fWord);
+      setHTML($('#fSub'), esc(fSub));
+      setHTML($('#fNext'), fNext);
+    }
+
+    if (T.on && !plan.manual && e >= plan.end) { T.acc = plan.end; T.on = false; releaseLock(); onFinish(); updateBtn(); }
+    if (T.on) T.raf = requestAnimationFrame(() => tick(false));
+  }
+
+  function isDone() {
+    return plan.manual ? T.man === plan.rows.length - 1 && !T.on : !T.on && T.acc > 0 && T.acc >= plan.end;
+  }
+  function updateBtn() {
+    const done = isDone();
+    const label = T.on ? '暫停' : done ? (plan.manual ? '再煮一次' : '再沖一次') : started() ? '繼續' : '開始計時';
+    $('#btnGo').textContent = label; $('#fGo').textContent = label;
+    $('#btnNext').hidden = !plan.manual; $('#fNextBtn').hidden = !plan.manual;
+    $('#btnNext').disabled = plan.manual && done; $('#fNextBtn').disabled = plan.manual && done;
+    $('#fLog').hidden = !done;
+  }
+  async function takeLock() { try { T.lock = await navigator.wakeLock?.request('screen'); } catch (e) { T.lock = null; } }
+  function releaseLock() { try { T.lock && T.lock.release(); } catch (e) {} T.lock = null; }
+  function ensureAudio() {
+    try { if (!T.audio) T.audio = new (window.AudioContext || window.webkitAudioContext)(); T.audio.resume && T.audio.resume(); } catch (e) {}
+  }
+
+  function resetTimer() {
+    cancelAnimationFrame(T.raf); T.on = false; T.acc = 0; T.man = 0; T.cdKey = null; T.finished = false; releaseLock();
+    if (plan && plan.manual) { plan = build(); renderBrew(); }
+    if (plan) { renderRecipeLine(); T.idx = -2; updateBtn(); tick(true); }
+  }
+
+  function startTimer() {
+    if (isDone()) resetTimer();
+    T.start = performance.now(); T.on = true; takeLock();
+    if (plan.manual && T.man === 0) T.man = 1;
+    if (T.acc === 0) beep('step');
+    T.idx = T.acc > 0 || T.man > 1 ? T.idx : (plan.manual ? 1 : 0);
+    tick(true);
+  }
+
+  function goToggle() {
+    ensureAudio();
+    if (T.on) { T.acc = elapsed(); T.on = false; cancelAnimationFrame(T.raf); releaseLock(); tick(true); }
+    else startTimer();
+    updateBtn();
+  }
+
+  function nextStep() {
+    ensureAudio();
+    if (!started()) { startTimer(); updateBtn(); return; }
+    const e = elapsed(), nx = plan.rows[T.man + 1];
+    if (!nx) return;
+    const delta = e - nx.t;
+    for (let j = T.man + 2; j < plan.rows.length; j++) if (plan.rows[j].t != null) plan.rows[j].t += delta;
+    plan.end += delta;
+    nx.t = e; nx.actual = e;
+    T.man += 1;
+    if (nx.final) { T.acc = e; T.on = false; cancelAnimationFrame(T.raf); releaseLock(); onFinish(); }
+    $('#clockEnd').textContent = '約 ' + fmt(plan.end);
+    updateBtn();
+    tick(true);
+  }
+
+  /* ---------- Focus mode ---------- */
+  function openFocus() {
+    $('#focus').hidden = false;
+    document.body.style.overflow = 'hidden';
+    try { const p = $('#focus').requestFullscreen?.(); p && p.catch(() => {}); } catch (e) {}
+    $('#fGo').focus();
+    tick(true);
+  }
+  function closeFocus() {
+    $('#focus').hidden = true;
+    document.body.style.overflow = '';
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
+    $('#btnFocus').focus();
+  }
+
+  $('#btnGo').addEventListener('click', goToggle);
+  $('#fGo').addEventListener('click', goToggle);
+  $('#btnNext').addEventListener('click', nextStep);
+  $('#fNextBtn').addEventListener('click', nextStep);
+  $('#btnReset').addEventListener('click', resetTimer);
+  $('#btnFocus').addEventListener('click', openFocus);
+  $('#fClose').addEventListener('click', closeFocus);
+  $('#fLog').addEventListener('click', () => {
+    closeFocus();
+    $('#tasting').scrollIntoView({ behavior: 'auto', block: 'start' });
+    $('#t-good').focus();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#focus').hidden) closeFocus(); });
+
+  /* ---------- Events ---------- */
+  $('#beanGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-bean]'); if (!b) return;
+    S.bean = b.dataset.bean; S.ratio = BEANS[S.bean].ratio;
+    if (S.device === 'pour') {
+      const nm = BEANS[S.bean].method;
+      if (nm !== S.method) { S.method = nm; S.beans = nm === '46' ? 20 : 15; S.last = 'beans'; }
+    }
+    recalc(); resetTimer(); renderAll();
+    const nb = $('#bean-' + S.bean); if (nb) nb.focus();
+  });
+  $('#deviceSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-device]'); if (!b || b.dataset.device === S.device) return;
+    S.device = b.dataset.device; S.last = 'beans';
+    if (S.device === 'moka') { S.beans = POTS[S.pot].b; S.water = POTS[S.pot].w; }
+    else S.beans = S.device === 'drip' ? 10 : (S.method === '46' ? 20 : 15);
+    recalc(); resetTimer(); renderAll();
+  });
+  $('#methodSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-method]'); if (!b || b.disabled) return;
+    S.method = b.dataset.method; resetTimer(); renderAll();
+  });
+  $('#icedSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-iced]'); if (!b) return;
+    S.iced = b.dataset.iced === '1'; resetTimer(); renderAll();
+  });
+  $('#potSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-pot]'); if (!b) return;
+    S.pot = +b.dataset.pot; S.beans = POTS[S.pot].b; S.water = POTS[S.pot].w;
+    resetTimer(); renderAll();
+  });
+  $('#milkSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-milk]'); if (!b) return;
+    S.milk = +b.dataset.milk; resetTimer(); renderAll();
+  });
+  $('#flavorSeg').addEventListener('click', e => { const b = e.target.closest('[data-flavor]'); if (!b) return; S.flavor = b.dataset.flavor; renderAll(); });
+  $('#strengthSeg').addEventListener('click', e => { const b = e.target.closest('[data-strength]'); if (!b) return; S.strength = b.dataset.strength; renderAll(); });
+  $('#ratios').addEventListener('click', e => {
+    const b = e.target.closest('[data-ratio]'); if (!b) return;
+    S.ratio = +b.dataset.ratio; recalc(); renderAll();
+  });
+
+  $('#inBeans').addEventListener('input', e => {
+    const v = parseFloat(e.target.value); if (!(v > 0)) return;
+    S.beans = round1(v); S.last = 'beans'; recalc(); renderAll('beans');
+  });
+  $('#inWater').addEventListener('input', e => {
+    const v = parseFloat(e.target.value); if (!(v > 0)) return;
+    S.water = Math.round(v); S.last = 'water'; recalc(); renderAll('water');
+  });
+  ['#inBeans', '#inWater'].forEach(s => $(s).addEventListener('blur', () => syncInputs()));
+
+  document.querySelectorAll('[data-step]').forEach(btn => btn.addEventListener('click', () => {
+    const [k, d] = btn.dataset.step.split(':');
+    if (k === 'beans') { S.beans = Math.max(1, round1(S.beans + +d)); S.last = 'beans'; }
+    else { S.water = Math.max(10, S.water + +d); S.last = 'water'; }
+    recalc(); renderAll();
+  }));
+
+  $('#tasteGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-taste]'); if (!b) return;
+    TS.taste = TS.taste === b.dataset.taste ? null : b.dataset.taste;
+    setPressed('#tasteGrid', 'taste', TS.taste || '');
+    $('#savedMsg').textContent = '';
+    renderAdvice();
+  });
+  $('#advApply').addEventListener('click', e => {
+    const r = +e.currentTarget.dataset.ratio; if (!r) return;
+    S.ratio = r; S.last = 'beans'; recalc(); resetTimer(); renderAll();
+    $('#savedMsg').textContent = `已把比例改成 1:${r}，水量變成 ${S.water} ml。`;
+  });
+  $('#rating').addEventListener('click', e => {
+    const b = e.target.closest('[data-rate]'); if (!b) return;
+    const v = +b.dataset.rate; TS.rating = TS.rating === v ? 0 : v; renderRating();
+  });
+  $('#btnSave').addEventListener('click', saveCurrent);
+  $('#logList').addEventListener('click', e => {
+    const ld = e.target.closest('[data-load]');
+    if (ld) { const en = LOG.find(x => x.id === ld.dataset.load); if (en) loadEntry(en); return; }
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = '確定刪除？'; return; }
+      LOG = LOG.filter(x => x.id !== del.dataset.del); saveLog(LOG); renderLog();
+    }
+  });
+  $('#logList').addEventListener('focusout', e => {
+    const d = e.target.closest && e.target.closest('[data-del].armed');
+    if (d) { d.classList.remove('armed'); d.textContent = '刪除'; }
+  });
+  $('#btnCsv').addEventListener('click', () => {
+    const csv = toCSV(), box = $('#csvBox'), btn = $('#btnCsv');
+    const fallback = () => { box.hidden = false; box.value = csv; box.focus(); box.select(); btn.textContent = '已選取，請手動複製'; };
+    if (!LOG.length) { btn.textContent = '還沒有紀錄'; return; }
+    try {
+      navigator.clipboard.writeText(csv).then(() => { btn.textContent = '已複製'; box.hidden = true; }, fallback);
+    } catch (err) { fallback(); }
+  });
+
+  /* ---------- Masthead date ---------- */
+  const now = new Date();
+  $('#today').textContent = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  $('#vol').textContent = `Vol. ${now.getFullYear() - 2025} · No. ${doy}`;
+
+  renderAll();
+  renderRating();
+  renderLog();
+})();
+</script>
+
+</html>
